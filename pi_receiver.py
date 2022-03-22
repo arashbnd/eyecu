@@ -14,8 +14,11 @@ from flask import Response
 from flask import Flask
 import argparse
 import os
+import time
 
-
+device_state = "CLOSE"
+open_timestamp = None
+CLOSE_AFTER = 8
 
 def convert_byte_to_mat(byte):
     nparr = np.frombuffer(byte, np.byte)
@@ -80,7 +83,7 @@ def disconnect_cv():
 outputFrame = None
 lock = threading.Lock()
 
-rpi_address = "http://192.168.1.10"
+rpi_address = "http://192.168.1.35"
 
 # Hardcode raspberry pi streaming url for dev purpose. Move
 # this to environment variable when used in production
@@ -88,10 +91,10 @@ cam = rpi_address + ":8080/stream/video.jpeg"
 
 # Use cv2.CAP_ANY for auto select
 # TODO: uncomment this for prod
-# cap = cv2.VideoCapture(cam, cv2.CAP_ANY)
+cap = cv2.VideoCapture(cam, cv2.CAP_ANY)
 
 # Mock data from local video in case there is no RP
-cap = cv2.VideoCapture("C:\\Users\\valer\\Downloads\\Video.mp4")
+# cap = cv2.VideoCapture("C:\\Users\\valer\\Downloads\\Video.mp4")
 
 if not cap:
     print("!!! Failed VideoCapture: invalid parameter!")
@@ -134,7 +137,7 @@ elif exists("./img") == True:
     f.close()
 
 def feed_receiver():
-    global outputFrame, known_face_encodings, known_face_names
+    global outputFrame, known_face_encodings, known_face_names, device_state, open_timestamp, CLOSE_AFTER
 
     while(True):
         # Capture frame-by-frame
@@ -167,9 +170,22 @@ def feed_receiver():
             cv2.rectangle(frame, (left, bottom + 10), (right, bottom), (0, 0, 255), cv2.FILLED)
             font = cv2.FONT_HERSHEY_DUPLEX
             cv2.putText(frame, name, (left + 1, bottom + 6), font, 0.35, (255, 255, 255), 1)
+        
+            if device_state == "CLOSE" and name != "Unknown":
+                print("Detected: " + name)
+                device_state = "OPEN"
+                open_timestamp = time.time()
+                requests.get(rpi_address + ":5000/open")
+
         frame = cv2.imencode('.jpg', frame)[1].tobytes()
         frame = base64.encodebytes(frame).decode("utf-8")
         socketio.emit('server2web', {'image':"data:image/jpeg;base64,{}".format(frame)}, namespace='/web')
+
+        if device_state == "OPEN" and open_timestamp and time.time() - open_timestamp > CLOSE_AFTER:
+            device_state = "CLOSE"
+            open_timestamp = None
+            requests.get(rpi_address + ":5000/close")
+
 if __name__ == "__main__":
 
     # Run RP feed proccessor in a sub thread
