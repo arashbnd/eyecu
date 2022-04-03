@@ -34,7 +34,8 @@ draw = ImageDraw.Draw(pil_image)
 
 # Loop through faces in test image
 for(top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
-  matches = face_recognition.compare_faces(known_face_encodings, face_encoding)
+  #added  tolerance=0.65 as a parameter below to increase comparison difficulty 
+  matches = face_recognition.compare_faces(known_face_encodings, face_encoding,  tolerance=0.65)
 
   name = "Unknown Person"
 
