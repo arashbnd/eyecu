@@ -73,7 +73,7 @@ if __name__ == '__main__':
     # sio.connect('http://192.168.0.108:5000') ## uncomment this line when the server is on remote system change the ip address with the ip address
     # of the system where the server is running.#'http://localhost:5000/'
     # sio.connect('0.0.0.0:5000')
-    sio.connect('http://localhost:5001/', namespaces=['/cv'])
+    sio.connect('http://192.168.1.6:5001/', namespaces=['/cv'])
     #sleep(3000)
     #sio.connect('http://localhost:5001/', namespaces=['/cv']) - no workspace connects
     #sio.connect('http://localhost:5001/', transports=['websocket', 'polling'])

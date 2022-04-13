@@ -34,7 +34,7 @@ known_face_names = [
 app = Flask(__name__)
 #, ping_timeout=60, ping_interval=10''
 #socketio = SocketIO(app,cors_allowed_origins="*",  logger=True, engineio_logger=True)
-socketio = SocketIO(app,cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app,cors_allowed_origins="*", async_mode="eventlet")
 
 @app.route('/test')
 def test():
@@ -103,4 +103,4 @@ def handle_cv_image(image): # we can run the box stuff and image recon here
     #pass
 if __name__ == "__main__":
     print('[INFO] Starting server at http://localhost:5001')
-    socketio.run(app=app, host='localhost', port=5001)
+    socketio.run(app=app, host='0.0.0.0', port=5001)
